@@ -19,10 +19,11 @@ params.alpha   = 0.14;
 params.t_total = 3600;
 params.dt      = 0.05;
 params.clip_pct = 10;
-params.Dt_out   = 0.2; 
+params.Dt_out   = 0.2;
 
 
 params.plot_results = true;     % Plotting ON/OFF
+params.make_video   = false;    % Animation + optional MP4 writing
 
 
 %% ------------------ MESH & MATERIAL ------------------
@@ -31,22 +32,33 @@ mesh = build_mesh(params);
 %% ------------------ WAVE + WIND GENERATION ------------------
 [waves] = generate_wave_spectrum(params, mesh);
 [wind]  = compute_kaimal_wind(params, mesh);
-F_hub_ts = compute_hub_thrust(params, wind);
 
 %% ------------------ GLOBAL MATRICES ------------------
-[K,M,C,tipDOF] = assemble_global_matrices(mesh, params);
+[K,M,C,tipDOF,hubDOF,blade] = assemble_global_matrices(mesh, params);
+mesh.blade = blade;
 
 %% ------------------ MORISON HYDRO FORCES (PRECOMPUTED) ------------------
 Fi = compute_morison(mesh, params, waves);
 
+F_hub_ts = [];
+F_blade_ts = [];
+if strcmpi(params.aero_model, 'distributed_drag')
+    F_blade_ts = compute_blade_drag(params, mesh, wind, blade, size(K,1));
+else
+    F_hub_ts = compute_hub_thrust(params, wind);
+end
+
 %% ------------------ NEWMARK TIME INTEGRATION ------------------
-results = newmark_integrate(mesh, params, K, M, C, Fi, F_hub_ts);
+results = newmark_integrate(mesh, params, K, M, C, Fi, F_hub_ts, F_blade_ts);
 
 %% ------------------ POST-PROCESS ------------------
 mono = postprocess_results(mesh, params, results, waves, wind);
 %% ------------------ PLOTTING ------------------
 if params.plot_results
     plot_combined_results(mesh, mono, waves, wind);
+end
+if params.make_video
+    animate_structure(mesh, params, results);
 end
 %% ------------------ SAVE ------------------
 save("monosim_results.mat", "mono");

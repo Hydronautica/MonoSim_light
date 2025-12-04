@@ -1,15 +1,23 @@
-function results = newmark_integrate(mesh,p,K,M,C,Fi,Fhub)
+function results = newmark_integrate(mesh,p,K,M,C,Fi,Fhub,Fblade)
 % NEWMARK_INTEGRATE
 %   Time integrate monopile DOFs with hydro (Fi) + hub thrust (Fhub).
 %
 %   mesh.nNode   : number of nodes
 %   Fi           : (nd x nSteps+1) hydro forces
 %   Fhub         : (1 x nSteps+1) hub thrust time series
+%   Fblade       : (nBlades x nSteps+1) distributed blade drag forces
+
+    if nargin < 7 || isempty(Fhub)
+        Fhub = [];
+    end
+    if nargin < 8 || isempty(Fblade)
+        Fblade = [];
+    end
 
     % Time and sizes
     time   = 0:p.dt:p.t_total;
     nSteps = numel(time) - 1;
-    nd     = 2*mesh.nNode;
+    nd     = size(K,1);
 
     U = zeros(nd, nSteps+1);   % displacements
     V = zeros(nd, nSteps+1);   % velocities
@@ -33,14 +41,35 @@ function results = newmark_integrate(mesh,p,K,M,C,Fi,Fhub)
     % Effective stiffness matrix
     Keff = K(free,free) + a0*M(free,free) + a1*C(free,free);
 
-    % Tip DOF (lateral displacement at top node)
-    tipDOF = 2*(mesh.nNode-1) + 1;
+    % Hub DOF (lateral displacement at rotor center)
+    hubDOF = 2*mesh.nNode + 1;
+    bladeDOFs = []; % kept for backward compatibility when padding
+
+    % Ensure hydro force array covers all DOFs (pad with zeros for blades)
+    if size(Fi,1) < nd
+        Fi_full = zeros(nd, size(Fi,2));
+        Fi_full(1:size(Fi,1), :) = Fi;
+        Fi = Fi_full;
+    end
+
+    % Ensure blade loads align to DOFs
+    if isempty(Fblade)
+        Fblade = zeros(nd, size(Fi,2));
+    end
 
     % ---- Initial acceleration (t = 0) ----
     F0 = Fi(:,1);
     % add hub thrust at t=0 (if provided)
     if numel(Fhub) >= 1
-        F0(tipDOF) = F0(tipDOF) + Fhub(1);
+        F0(hubDOF) = F0(hubDOF) + Fhub(1);
+    end
+    % add blade drag at t=0
+    if ~isempty(Fblade)
+        if size(Fblade,1) < nd
+            F0(1:size(Fblade,1)) = F0(1:size(Fblade,1)) + Fblade(:,1);
+        else
+            F0 = F0 + Fblade(:,1);
+        end
     end
 
     A(free,1) = M(free,free) \ (F0(free) ...
@@ -53,9 +82,17 @@ function results = newmark_integrate(mesh,p,K,M,C,Fi,Fhub)
         % Base hydro load
         F = Fi(:,i);
 
-        % Add hub thrust into tip DOF (no concatenation!)
+        % Add hub thrust into hub DOF (no concatenation!)
         if i <= numel(Fhub)
-            F(tipDOF) = F(tipDOF) + Fhub(i);
+            F(hubDOF) = F(hubDOF) + Fhub(i);
+        end
+        % Add distributed blade drag to blade DOFs
+        if ~isempty(Fblade) && i <= size(Fblade,2)
+            if size(Fblade,1) < nd
+                F(1:size(Fblade,1)) = F(1:size(Fblade,1)) + Fblade(:,i);
+            else
+                F = F + Fblade(:,i);
+            end
         end
 
         % Effective RHS

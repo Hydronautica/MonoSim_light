@@ -13,6 +13,23 @@ params.Cm = 2.0;            % Morison inertia
 
 %% ------------------ TURBINE / AERO ------------------
 params.R_rotor = 80;        % rotor radius [m]
+params.rna_offset = 7;      % horizontal offset from tower top to rotor [m]
+params.aero_model = 'actuator';  % 'actuator' thrust at hub or 'distributed_drag'
+params.blade_drag_Cd = 1.2;       % drag coefficient for blade sections
+params.blade_chord = 4.0;         % representative blade chord [m]
+
+%% ------------------ BLADES ------------------
+params.n_blades      = 3;                 % number of blades
+params.blade_angles  = [0, 120, 240];     % azimuth positions [deg]
+params.m_blade       = 5e4;               % lumped blade mass [kg]
+params.k_blade       = 5e6;               % blade bending stiffness [N/m]
+params.c_blade       = 5e4;               % blade hinge damping [N·s/m]
+params.blade_n_nodes = 6;                 % structural nodes per blade (>=2)
+
+%% ------------------ RNA LINK ------------------
+params.m_rna = 5e4;         % mass of the RNA link [kg]
+params.k_rna = 5e7;         % lateral stiffness of the RNA link [N/m]
+params.c_rna = 1e5;         % damping of the RNA link [N·s/m]
 
 %% ------------------ GEOMETRY ------------------
 params.L_pile  = 50;        % embedment depth
@@ -55,5 +72,9 @@ params.irregular    = true;
 params.Nfreq = 2048;    % for JONSWAP
 params.T_min_factor = 1/3;
 params.T_max_factor = 3;
+
+params.make_video      = false;               % enable structural animation
+params.video_stride    = 10;                  % output every Nth time step to video
+params.video_filename  = 'monosim_animation.mp4';
 
 end
