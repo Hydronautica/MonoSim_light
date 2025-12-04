@@ -33,8 +33,8 @@ function results = newmark_integrate(mesh,p,K,M,C,Fi,Fhub)
     % Effective stiffness matrix
     Keff = K(free,free) + a0*M(free,free) + a1*C(free,free);
 
-    % Tip DOF (lateral displacement at top node)
-    tipDOF = 2*(mesh.nNode-1) + 1;
+    % Hub DOF (lateral displacement at rotor center)
+    hubDOF = 2*mesh.nNode + 1;
 
     % Ensure hydro force array covers all DOFs (pad with zeros for blades)
     if size(Fi,1) < nd
@@ -47,7 +47,7 @@ function results = newmark_integrate(mesh,p,K,M,C,Fi,Fhub)
     F0 = Fi(:,1);
     % add hub thrust at t=0 (if provided)
     if numel(Fhub) >= 1
-        F0(tipDOF) = F0(tipDOF) + Fhub(1);
+        F0(hubDOF) = F0(hubDOF) + Fhub(1);
     end
 
     A(free,1) = M(free,free) \ (F0(free) ...
@@ -60,9 +60,9 @@ function results = newmark_integrate(mesh,p,K,M,C,Fi,Fhub)
         % Base hydro load
         F = Fi(:,i);
 
-        % Add hub thrust into tip DOF (no concatenation!)
+        % Add hub thrust into hub DOF (no concatenation!)
         if i <= numel(Fhub)
-            F(tipDOF) = F(tipDOF) + Fhub(i);
+            F(hubDOF) = F(hubDOF) + Fhub(i);
         end
 
         % Effective RHS

@@ -35,7 +35,7 @@ mesh = build_mesh(params);
 F_hub_ts = compute_hub_thrust(params, wind);
 
 %% ------------------ GLOBAL MATRICES ------------------
-[K,M,C,tipDOF] = assemble_global_matrices(mesh, params);
+[K,M,C,tipDOF,hubDOF,bladeDOFs] = assemble_global_matrices(mesh, params);
 
 %% ------------------ MORISON HYDRO FORCES (PRECOMPUTED) ------------------
 Fi = compute_morison(mesh, params, waves);

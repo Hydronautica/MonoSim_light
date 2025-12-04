@@ -13,6 +13,7 @@ params.Cm = 2.0;            % Morison inertia
 
 %% ------------------ TURBINE / AERO ------------------
 params.R_rotor = 80;        % rotor radius [m]
+params.rna_offset = 7;      % horizontal offset from tower top to rotor [m]
 
 %% ------------------ BLADES ------------------
 params.n_blades      = 3;                 % number of blades
@@ -20,6 +21,11 @@ params.blade_angles  = [0, 120, 240];     % azimuth positions [deg]
 params.m_blade       = 5e4;               % lumped blade mass [kg]
 params.k_blade       = 5e6;               % blade bending stiffness [N/m]
 params.c_blade       = 5e4;               % blade hinge damping [N·s/m]
+
+%% ------------------ RNA LINK ------------------
+params.m_rna = 5e4;         % mass of the RNA link [kg]
+params.k_rna = 5e7;         % lateral stiffness of the RNA link [N/m]
+params.c_rna = 1e5;         % damping of the RNA link [N·s/m]
 
 %% ------------------ GEOMETRY ------------------
 params.L_pile  = 50;        % embedment depth
