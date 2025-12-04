@@ -1,0 +1,59 @@
+function params = build_default_params(params)
+% Fill missing fields in params with defaults identical to your monolithic script.
+
+g = 9.81;
+params.g = g;
+
+%% ------------------ WATER / AIR ------------------
+params.rho_water = 1025;    % kg/m^3
+params.rho_air   = 1.225;   % kg/m^3
+
+params.Cd = 1.0;            % Morison drag
+params.Cm = 2.0;            % Morison inertia
+
+%% ------------------ TURBINE / AERO ------------------
+params.R_rotor = 80;        % rotor radius [m]
+
+%% ------------------ GEOMETRY ------------------
+params.L_pile  = 50;        % embedment depth
+params.L_above = 120;       % above-seabed length
+params.TowerHeight = 90;    % hub height above SWL
+params.sectionCutOff = params.L_above - params.TowerHeight;
+
+%% ------------------ MATERIAL SECTIONS ------------------
+% Section 1
+params.D_outer1 = 7;
+params.thick1   = 0.07;
+params.E1       = 210e9;
+params.rho1     = 7850;
+
+% Section 2
+params.D_outer2 = 7;
+params.thick2   = 0.07;
+params.E2       = 210e9;
+params.rho2     = 7850;
+
+% Soil
+params.D_outer_soil = 7;
+params.thick_soil   = 0.07;
+params.E_soil       = 210e16;
+params.rho_soil     = 7850;
+
+%% ------------------ HUB MASS / INERTIA ------------------
+params.m_hub = 2e5;
+params.I_hub = 2e6;
+
+%% ------------------ RAYLEIGH DAMPING ------------------
+params.alpha_ray = 0.29;
+params.beta_ray  = 0.013;
+
+%% ------------------ SIMULATION ------------------
+params.secondOrder  = false;
+params.useLinearPY  = true;
+params.irregular    = true;
+
+params.Nfreq = 2048;    % for JONSWAP
+params.T_min_factor = 1/3;
+params.T_max_factor = 3;
+
+end
