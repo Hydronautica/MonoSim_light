@@ -19,10 +19,11 @@ params.alpha   = 0.14;
 params.t_total = 3600;
 params.dt      = 0.05;
 params.clip_pct = 10;
-params.Dt_out   = 0.2; 
+params.Dt_out   = 0.2;
 
 
 params.plot_results = true;     % Plotting ON/OFF
+params.make_video   = false;    % Animation + optional MP4 writing
 
 
 %% ------------------ MESH & MATERIAL ------------------
@@ -47,6 +48,9 @@ mono = postprocess_results(mesh, params, results, waves, wind);
 %% ------------------ PLOTTING ------------------
 if params.plot_results
     plot_combined_results(mesh, mono, waves, wind);
+end
+if params.make_video
+    animate_structure(mesh, params, results);
 end
 %% ------------------ SAVE ------------------
 save("monosim_results.mat", "mono");

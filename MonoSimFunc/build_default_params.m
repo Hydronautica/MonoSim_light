@@ -63,4 +63,8 @@ params.Nfreq = 2048;    % for JONSWAP
 params.T_min_factor = 1/3;
 params.T_max_factor = 3;
 
+params.make_video      = false;               % enable structural animation
+params.video_stride    = 10;                  % output every Nth time step to video
+params.video_filename  = 'monosim_animation.mp4';
+
 end
