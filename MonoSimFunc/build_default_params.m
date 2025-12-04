@@ -14,6 +14,13 @@ params.Cm = 2.0;            % Morison inertia
 %% ------------------ TURBINE / AERO ------------------
 params.R_rotor = 80;        % rotor radius [m]
 
+%% ------------------ BLADES ------------------
+params.n_blades      = 3;                 % number of blades
+params.blade_angles  = [0, 120, 240];     % azimuth positions [deg]
+params.m_blade       = 5e4;               % lumped blade mass [kg]
+params.k_blade       = 5e6;               % blade bending stiffness [N/m]
+params.c_blade       = 5e4;               % blade hinge damping [N·s/m]
+
 %% ------------------ GEOMETRY ------------------
 params.L_pile  = 50;        % embedment depth
 params.L_above = 120;       % above-seabed length

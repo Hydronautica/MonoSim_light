@@ -9,7 +9,7 @@ function results = newmark_integrate(mesh,p,K,M,C,Fi,Fhub)
     % Time and sizes
     time   = 0:p.dt:p.t_total;
     nSteps = numel(time) - 1;
-    nd     = 2*mesh.nNode;
+    nd     = size(K,1);
 
     U = zeros(nd, nSteps+1);   % displacements
     V = zeros(nd, nSteps+1);   % velocities
@@ -35,6 +35,13 @@ function results = newmark_integrate(mesh,p,K,M,C,Fi,Fhub)
 
     % Tip DOF (lateral displacement at top node)
     tipDOF = 2*(mesh.nNode-1) + 1;
+
+    % Ensure hydro force array covers all DOFs (pad with zeros for blades)
+    if size(Fi,1) < nd
+        Fi_full = zeros(nd, size(Fi,2));
+        Fi_full(1:size(Fi,1), :) = Fi;
+        Fi = Fi_full;
+    end
 
     % ---- Initial acceleration (t = 0) ----
     F0 = Fi(:,1);
