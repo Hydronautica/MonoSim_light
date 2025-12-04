@@ -1,24 +1,14 @@
-function F_blades = compute_blade_drag(p, mesh, wind)
-%COMPUTE_BLADE_DRAG Compute distributed drag loads along blades.
+function F_blades = compute_blade_drag(p, mesh, wind, blade, nd)
+%COMPUTE_BLADE_DRAG Compute distributed drag loads along discretized blades.
 %
-%   Returns n_blades x nSteps+1 force matrix applied in the x direction
-%   (aligned with wind) for each blade DOF.
+%   Returns nd x nSteps force matrix applied in the x direction (aligned
+%   with wind) for each blade node translation/rotation DOF.
 
 nSteps = numel(wind.U);
-F_blades = zeros(p.n_blades, nSteps);
+F_blades = zeros(nd, nSteps);
 
-% Spanwise coordinates (from hub to tip)
-r_span = linspace(0, p.R_rotor, p.blade_n_sections);
-% Differential length for integration (trapezoidal)
-if numel(r_span) > 1
-    dr = diff(r_span);
-    dr = [dr(1), dr]; % use first spacing at root for leading segment
-else
-    dr = p.R_rotor;
-end
-
-rho = p.rho_air;
-Cd  = p.blade_drag_Cd;
+rho   = p.rho_air;
+Cd    = p.blade_drag_Cd;
 chord = p.blade_chord;
 
 bladeAngles = deg2rad(p.blade_angles(:));
@@ -26,22 +16,37 @@ z_hub = mesh.TowerHeight;
 
 for iB = 1:p.n_blades
     theta = bladeAngles(iB);
-    % Local z along the blade in the YZ plane (x faces the wind)
-    z_loc = z_hub + r_span .* sin(theta);
 
-    % Power-law shear scaling relative to hub height
-    shear_scale = (max(z_loc, 1e-3).' ./ max(z_hub, 1e-3)).^p.alpha;
+    trans = blade.transDOF{iB};
+    rot   = blade.rotDOF{iB};
 
-    % Wind speed at each span location over time
-    U_local = wind.U .* shear_scale; % broadcast over time via implicit expansion
+    % Node heights along the span (YZ plane, x faces wind)
+    z_nodes = z_hub + blade.span .* sin(theta);
 
-    % Sectional drag per unit length (force direction +x)
-    q = 0.5 * rho * Cd * chord .* (U_local.^2);
+    shear_scale = (max(z_nodes(:), 1e-3) ./ max(z_hub, 1e-3)).^p.alpha;
 
-    % Integrate along the span to get resultant force time series
-    F_span = sum(q .* dr.', 1);
+    % Wind speed at each node over time
+    U_local = wind.U .* shear_scale; % implicit expansion
 
-    F_blades(iB, :) = F_span;
+    % Sectional drag per unit length at nodes
+    q_nodes = 0.5 * rho * Cd * chord .* (U_local.^2);
+
+    % Assemble equivalent nodal forces for each element
+    for e = 1:(numel(blade.span)-1)
+        q_elem = 0.5 * (q_nodes(e,:) + q_nodes(e+1,:));
+        Le     = blade.Le;
+
+        % Equivalent nodal load vector for uniform transverse load q_elem
+        fe1 = q_elem * Le / 2;           % translation at node 1
+        fr1 = q_elem * Le^2 / 12;        % rotation at node 1
+        fe2 = q_elem * Le / 2;           % translation at node 2
+        fr2 = -q_elem * Le^2 / 12;       % rotation at node 2
+
+        F_blades(trans(e), :)   = F_blades(trans(e), :)   + fe1;
+        F_blades(rot(e), :)     = F_blades(rot(e), :)     + fr1;
+        F_blades(trans(e+1), :) = F_blades(trans(e+1), :) + fe2;
+        F_blades(rot(e+1), :)   = F_blades(rot(e+1), :)   + fr2;
+    end
 end
 
 end

@@ -17,7 +17,6 @@ params.rna_offset = 7;      % horizontal offset from tower top to rotor [m]
 params.aero_model = 'actuator';  % 'actuator' thrust at hub or 'distributed_drag'
 params.blade_drag_Cd = 1.2;       % drag coefficient for blade sections
 params.blade_chord = 4.0;         % representative blade chord [m]
-params.blade_n_sections = 20;     % spanwise integration sections
 
 %% ------------------ BLADES ------------------
 params.n_blades      = 3;                 % number of blades
@@ -25,6 +24,7 @@ params.blade_angles  = [0, 120, 240];     % azimuth positions [deg]
 params.m_blade       = 5e4;               % lumped blade mass [kg]
 params.k_blade       = 5e6;               % blade bending stiffness [N/m]
 params.c_blade       = 5e4;               % blade hinge damping [N·s/m]
+params.blade_n_nodes = 6;                 % structural nodes per blade (>=2)
 
 %% ------------------ RNA LINK ------------------
 params.m_rna = 5e4;         % mass of the RNA link [kg]

@@ -43,7 +43,7 @@ function results = newmark_integrate(mesh,p,K,M,C,Fi,Fhub,Fblade)
 
     % Hub DOF (lateral displacement at rotor center)
     hubDOF = 2*mesh.nNode + 1;
-    bladeDOFs = hubDOF + (1:p.n_blades);
+    bladeDOFs = []; % kept for backward compatibility when padding
 
     % Ensure hydro force array covers all DOFs (pad with zeros for blades)
     if size(Fi,1) < nd
@@ -54,7 +54,7 @@ function results = newmark_integrate(mesh,p,K,M,C,Fi,Fhub,Fblade)
 
     % Ensure blade loads align to DOFs
     if isempty(Fblade)
-        Fblade = zeros(p.n_blades, size(Fi,2));
+        Fblade = zeros(nd, size(Fi,2));
     end
 
     % ---- Initial acceleration (t = 0) ----
@@ -65,7 +65,11 @@ function results = newmark_integrate(mesh,p,K,M,C,Fi,Fhub,Fblade)
     end
     % add blade drag at t=0
     if ~isempty(Fblade)
-        F0(bladeDOFs) = F0(bladeDOFs) + Fblade(:,1);
+        if size(Fblade,1) < nd
+            F0(1:size(Fblade,1)) = F0(1:size(Fblade,1)) + Fblade(:,1);
+        else
+            F0 = F0 + Fblade(:,1);
+        end
     end
 
     A(free,1) = M(free,free) \ (F0(free) ...
@@ -84,7 +88,11 @@ function results = newmark_integrate(mesh,p,K,M,C,Fi,Fhub,Fblade)
         end
         % Add distributed blade drag to blade DOFs
         if ~isempty(Fblade) && i <= size(Fblade,2)
-            F(bladeDOFs) = F(bladeDOFs) + Fblade(:,i);
+            if size(Fblade,1) < nd
+                F(1:size(Fblade,1)) = F(1:size(Fblade,1)) + Fblade(:,i);
+            else
+                F = F + Fblade(:,i);
+            end
         end
 
         % Effective RHS

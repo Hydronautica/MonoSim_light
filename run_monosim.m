@@ -32,19 +32,21 @@ mesh = build_mesh(params);
 %% ------------------ WAVE + WIND GENERATION ------------------
 [waves] = generate_wave_spectrum(params, mesh);
 [wind]  = compute_kaimal_wind(params, mesh);
-F_hub_ts = [];
-F_blade_ts = [];
-if strcmpi(params.aero_model, 'distributed_drag')
-    F_blade_ts = compute_blade_drag(params, mesh, wind);
-else
-    F_hub_ts = compute_hub_thrust(params, wind);
-end
 
 %% ------------------ GLOBAL MATRICES ------------------
-[K,M,C,tipDOF,hubDOF,bladeDOFs] = assemble_global_matrices(mesh, params);
+[K,M,C,tipDOF,hubDOF,blade] = assemble_global_matrices(mesh, params);
+mesh.blade = blade;
 
 %% ------------------ MORISON HYDRO FORCES (PRECOMPUTED) ------------------
 Fi = compute_morison(mesh, params, waves);
+
+F_hub_ts = [];
+F_blade_ts = [];
+if strcmpi(params.aero_model, 'distributed_drag')
+    F_blade_ts = compute_blade_drag(params, mesh, wind, blade, size(K,1));
+else
+    F_hub_ts = compute_hub_thrust(params, wind);
+end
 
 %% ------------------ NEWMARK TIME INTEGRATION ------------------
 results = newmark_integrate(mesh, params, K, M, C, Fi, F_hub_ts, F_blade_ts);

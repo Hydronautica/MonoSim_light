@@ -10,6 +10,10 @@ nNode   = mesh.nNode;
 nBlades = params.n_blades;
 tipDOF  = 2*(nNode-1) + 1;
 hubDOF  = 2*nNode + 1;
+blade   = [];
+if isfield(mesh, 'blade')
+    blade = mesh.blade;
+end
 
 % Time sampling for animation
 frameStride = max(1, round(params.video_stride));
@@ -20,7 +24,6 @@ z_nodes     = mesh.elemZ(:);
 top_z       = z_nodes(end);
 hub_offset  = params.rna_offset;
 bladeAngles = deg2rad(params.blade_angles(:));
-bladeDOFs   = hubDOF + (1:nBlades);
 
 % Prepare figure
 fig = figure('Color','w','Name','Monopile Animation');
@@ -40,9 +43,19 @@ colors = lines(nBlades);
 bladeLines = gobjects(nBlades,1);
 for iB = 1:nBlades
     theta = bladeAngles(iB);
-    bladeTip = hubPos0 + [0, params.R_rotor*cos(theta), params.R_rotor*sin(theta)];
-    bladeLines(iB) = plot3(ax, [hubPos0(1), bladeTip(1)], [hubPos0(2), bladeTip(2)], ...
-        [hubPos0(3), bladeTip(3)], 'Color', colors(iB,:), 'LineWidth', 1.5);
+    if ~isempty(blade)
+        span  = blade.span;
+        yspan = span * cos(theta);
+        zspan = top_z + span * sin(theta);
+        trans = blade.transDOF{iB};
+        xspan = hub_offset + res.U(trans, frameIdx(1));
+    else
+        yspan = [0, params.R_rotor*cos(theta)];
+        zspan = [top_z, top_z + params.R_rotor*sin(theta)];
+        xspan = [hubPos0(1), hubPos0(1)];
+    end
+
+    bladeLines(iB) = plot3(ax, xspan, yspan, zspan, 'Color', colors(iB,:), 'LineWidth', 1.5);
 end
 
 xlim(ax, hub_offset + max(abs(x0))*1.5 + [-params.R_rotor, params.R_rotor]);
@@ -74,12 +87,19 @@ for iFrame = 1:numel(frameIdx)
     % Blades
     for iB = 1:nBlades
         theta = bladeAngles(iB);
-        blade_defl = res.U(bladeDOFs(iB), idx);
-        tip_x = hub_x + blade_defl;
-        tip_y = params.R_rotor * cos(theta);
-        tip_z = top_z + params.R_rotor * sin(theta);
-        set(bladeLines(iB), 'XData', [hub_x, tip_x], ...
-            'YData', [0, tip_y], 'ZData', [top_z, tip_z]);
+        if ~isempty(blade)
+            span  = blade.span;
+            yspan = span * cos(theta);
+            zspan = top_z + span * sin(theta);
+            trans = blade.transDOF{iB};
+            xspan = hub_offset + res.U(trans, idx);
+            set(bladeLines(iB), 'XData', xspan, 'YData', yspan, 'ZData', zspan);
+        else
+            tip_y = params.R_rotor * cos(theta);
+            tip_z = top_z + params.R_rotor * sin(theta);
+            set(bladeLines(iB), 'XData', [hub_x, hub_x], ...
+                'YData', [0, tip_y], 'ZData', [top_z, tip_z]);
+        end
     end
 
     drawnow;
