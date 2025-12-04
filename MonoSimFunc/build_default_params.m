@@ -14,6 +14,10 @@ params.Cm = 2.0;            % Morison inertia
 %% ------------------ TURBINE / AERO ------------------
 params.R_rotor = 80;        % rotor radius [m]
 params.rna_offset = 7;      % horizontal offset from tower top to rotor [m]
+params.aero_model = 'actuator';  % 'actuator' thrust at hub or 'distributed_drag'
+params.blade_drag_Cd = 1.2;       % drag coefficient for blade sections
+params.blade_chord = 4.0;         % representative blade chord [m]
+params.blade_n_sections = 20;     % spanwise integration sections
 
 %% ------------------ BLADES ------------------
 params.n_blades      = 3;                 % number of blades

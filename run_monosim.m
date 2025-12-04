@@ -32,7 +32,13 @@ mesh = build_mesh(params);
 %% ------------------ WAVE + WIND GENERATION ------------------
 [waves] = generate_wave_spectrum(params, mesh);
 [wind]  = compute_kaimal_wind(params, mesh);
-F_hub_ts = compute_hub_thrust(params, wind);
+F_hub_ts = [];
+F_blade_ts = [];
+if strcmpi(params.aero_model, 'distributed_drag')
+    F_blade_ts = compute_blade_drag(params, mesh, wind);
+else
+    F_hub_ts = compute_hub_thrust(params, wind);
+end
 
 %% ------------------ GLOBAL MATRICES ------------------
 [K,M,C,tipDOF,hubDOF,bladeDOFs] = assemble_global_matrices(mesh, params);
@@ -41,7 +47,7 @@ F_hub_ts = compute_hub_thrust(params, wind);
 Fi = compute_morison(mesh, params, waves);
 
 %% ------------------ NEWMARK TIME INTEGRATION ------------------
-results = newmark_integrate(mesh, params, K, M, C, Fi, F_hub_ts);
+results = newmark_integrate(mesh, params, K, M, C, Fi, F_hub_ts, F_blade_ts);
 
 %% ------------------ POST-PROCESS ------------------
 mono = postprocess_results(mesh, params, results, waves, wind);
